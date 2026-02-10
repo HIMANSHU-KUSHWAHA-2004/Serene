@@ -59,6 +59,7 @@ PUBLISHED_TIMETABLE_FILE = os.path.join(DATA_DIR, "published_timetable.json")
 RESCHEDULE_REQUESTS_FILE = os.path.join(DATA_DIR, "reschedule_requests.json")
 PENDING_REGISTRATIONS_FILE = os.path.join(DATA_DIR, "pending_registrations.json")
 ACTIVITY_LOG_FILE = os.path.join(DATA_DIR, "activity_log.json")
+SEED_USERS_FILE = os.path.join(BASE_DIR, "users.json")
 
 USERS = {}
 PUBLISHED_TIMETABLE = None
@@ -120,17 +121,61 @@ def write_json_file(path, data):
         json.dump(data, f, indent=2)
 
 
+def read_seed_users():
+    if not os.path.exists(SEED_USERS_FILE):
+        return {}
+    try:
+        with open(SEED_USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
 def load_users():
     users = read_json_file(USERS_FILE, {})
-    if not users:
-        users = {
-            "admin": {
-                "username": "admin",
-                "password": os.environ.get("DEFAULT_ADMIN_PASSWORD", "admin123"),
-                "role": "admin",
-                "name": "Administrator"
-            }
+    if not isinstance(users, dict):
+        users = {}
+
+    changed = False
+    seed_users = read_seed_users()
+    for username, record in seed_users.items():
+        if username in users or not isinstance(record, dict):
+            continue
+        users[username] = record
+        changed = True
+
+    if "admin" not in users:
+        users["admin"] = {
+            "username": "admin",
+            "password": os.environ.get("DEFAULT_ADMIN_PASSWORD", "admin123"),
+            "role": "admin",
+            "name": "Administrator"
         }
+        changed = True
+
+    demo_teacher_password = os.environ.get("DEFAULT_TEACHER_PASSWORD", "teacher123")
+    demo_teachers = [
+        ("t_dr_karambir", "Dr. Karambir"),
+        ("t_dr_sona", "Dr. Sona"),
+        ("t_mr_divyansh", "Mr. Divyansh"),
+        ("t_ms_pooja", "Ms. Pooja"),
+    ]
+    for username, teacher_name in demo_teachers:
+        if username in users:
+            continue
+        users[username] = {
+            "username": username,
+            "password": demo_teacher_password,
+            "role": "teacher",
+            "name": teacher_name,
+            "teacher_name": teacher_name,
+            "email": f"{username}@demo.local",
+            "status": "active"
+        }
+        changed = True
+
+    if changed:
         write_json_file(USERS_FILE, users)
     return users
 
