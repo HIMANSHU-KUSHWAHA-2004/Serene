@@ -425,6 +425,38 @@ def is_email_taken(email):
     return False
 
 
+def email_taken_source(email):
+    global USERS
+    USERS = load_users()
+    cleanup_pending_registrations()
+    normalized = (email or "").strip().lower()
+    if not normalized:
+        return None
+
+    for username, user in USERS.items():
+        if (user.get("email") or "").strip().lower() == normalized:
+            return {
+                "source": "users",
+                "username": username,
+                "role": user.get("role"),
+                "status": user.get("status", "active")
+            }
+
+    regs = get_latest_pending_registrations()
+    for reg in regs:
+        if (reg.get("email") or "").strip().lower() == normalized and reg.get("status") in (
+            "pending_email_verification", "pending_admin_approval", "approved"
+        ):
+            return {
+                "source": "pending_registrations",
+                "username": reg.get("username"),
+                "role": reg.get("role"),
+                "status": reg.get("status"),
+                "registration_id": reg.get("id")
+            }
+    return None
+
+
 def send_verification_email(email, code):
     resend_api_key = os.environ.get("RESEND_API_KEY")
     resend_from_email = os.environ.get("RESEND_FROM_EMAIL")
@@ -1916,7 +1948,10 @@ def auth_register_start():
         if is_username_taken(username):
             return jsonify({"error": "Username already exists"}), 409
         if is_email_taken(email):
-            return jsonify({"error": "Email already exists"}), 409
+            return jsonify({
+                "error": "Email already exists",
+                "details": email_taken_source(email)
+            }), 409
 
         now = datetime.utcnow()
         registration_id = int(now.timestamp() * 1000) + random.randint(10, 999)
