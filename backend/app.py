@@ -312,11 +312,17 @@ def cleanup_pending_registrations():
     regs = get_latest_pending_registrations()
     kept = []
     changed = False
+    now = datetime.utcnow()
     for reg in regs:
         status = reg.get("status")
         if status not in ("pending_email_verification", "pending_admin_approval"):
             changed = True
             continue
+        if status == "pending_email_verification":
+            expires = parse_iso_utc(reg.get("verification_expires_at"))
+            if expires and expires <= now:
+                changed = True
+                continue
         if status == "pending_admin_approval":
             if "verification_code" in reg or "verification_expires_at" in reg:
                 reg.pop("verification_code", None)
@@ -381,6 +387,9 @@ def add_activity_log(event_type, message, data=None):
 
 
 def is_username_taken(username):
+    global USERS
+    USERS = load_users()
+    cleanup_pending_registrations()
     uname = (username or "").strip().lower()
     for user in USERS.values():
         if (user.get("username") or "").strip().lower() == uname:
@@ -396,6 +405,9 @@ def is_username_taken(username):
 
 
 def is_email_taken(email):
+    global USERS
+    USERS = load_users()
+    cleanup_pending_registrations()
     normalized = (email or "").strip().lower()
     if not normalized:
         return False
