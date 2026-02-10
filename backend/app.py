@@ -1940,15 +1940,23 @@ def auth_register_start():
         except Exception as mail_error:
             email_message = f"Failed to send email: {mail_error}"
 
+        show_dev_code = os.environ.get("SHOW_DEV_VERIFICATION_CODE", "1") == "1"
+        if not sent and not show_dev_code:
+            regs[:] = [r for r in regs if r.get("id") != registration_id]
+            save_pending_registrations()
+            return jsonify({
+                "error": email_message or "Failed to send verification email. Please try again."
+            }), 502
+
         response = {
             "success": True,
             "registration_id": registration_id,
             "email_sent": sent,
-            "message": "Verification code sent to your email" if sent else email_message
+            "message": "Verification code sent to your email" if sent else (email_message or "Email delivery failed. Using dev preview code.")
         }
 
         # Dev fallback: expose code if email is not configured.
-        if not sent and os.environ.get("SHOW_DEV_VERIFICATION_CODE", "1") == "1":
+        if not sent and show_dev_code:
             response["verification_code_preview"] = code
 
         return jsonify(response)
