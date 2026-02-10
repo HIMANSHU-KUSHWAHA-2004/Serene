@@ -25,6 +25,12 @@ app = Flask(
     static_url_path='/'
 )
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-secret")
+running_on_render = bool(os.environ.get("RENDER"))
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="None" if running_on_render else "Lax",
+    SESSION_COOKIE_SECURE=running_on_render,
+)
 configured_origins = os.environ.get(
     "FRONTEND_ORIGIN",
     "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
