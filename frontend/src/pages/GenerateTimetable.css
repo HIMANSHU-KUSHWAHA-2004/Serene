@@ -1,0 +1,164 @@
+.generate-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fdfdfd;
+  font-family: "Inter", sans-serif;
+  width: 100vh;        /* 👈 constrain width */
+  margin: 0 auto;           /* 👈 center on screen */
+}
+
+.header {
+  background: #e0f2fe;      /* soft blue */
+  color: #1e3a8a;           /* dark blue text */
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;          /* 👈 ensures buttons wrap on small screens */
+  gap: 0.5rem;
+}
+
+.header-actions .btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: 0.2s ease;
+}
+
+.btn.import { background: #bbf7d0; color: #065f46; }   /* soft green */
+.btn.export { background: #bfdbfe; color: #1e3a8a; }   /* soft blue */
+.btn.clear { background: #fecaca; color: #7f1d1d; }   /* soft red */
+.btn.showall { background: #e5e7eb; color: #374151; }  /* soft gray */
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.tabs-nav {
+  display: flex;
+  flex-wrap: wrap;           /* 👈 makes tabs wrap instead of overflow */
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.tab-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 0.9rem;
+}
+
+.tab-btn.active {
+  background: #c7d2fe;    /* soft indigo */
+  color: #1e3a8a;
+  border-color: #a5b4fc;
+  font-weight: 500;
+}
+
+.tab-btn:hover {
+  background: #e0e7ff;
+}
+
+.content-area {
+  flex: 1;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 12px;
+  margin: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.footer {
+  text-align: center;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.8rem;
+  font-size: 0.85rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Header / Toolbar */
+.header {
+  background: #e0f2fe;   /* soft blue */
+  color: #1e3a8a;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+/* Buttons */
+.btn.import { background: #bbf7d0; color: #065f46; }
+.btn.export { background: #bfdbfe; color: #1e3a8a; }
+.btn.clear { background: #fecaca; color: #7f1d1d; }
+.btn.showall { background: #f3f4f6; color: #374151; }
+
+/* Tabs */
+.tabs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.tab-btn {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.tab-btn.active {
+  background: #dbeafe; /* soft indigo */
+  border-color: #a5b4fc;
+  color: #1e40af;
+}
+
+/* Content Area */
+.content-area {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 0 auto;
+  max-width: 1100px;  /* 👈 keeps width clean */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Timetable Configuration Box */
+.config-box {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+.config-box h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
