@@ -15,6 +15,7 @@ import urllib.request
 import urllib.error
 from email.mime.text import MIMEText
 from email.utils import formataddr
+from pymongo import MongoClient
 
 
 # Serve React production build from frontend/build
@@ -64,19 +65,57 @@ PUBLISHED_TIMETABLE = None
 RESCHEDULE_REQUESTS = []
 PENDING_REGISTRATIONS = []
 ACTIVITY_LOGS = []
+MONGO_CLIENT = None
+MONGO_STATE_COLLECTION = None
+
+
+def init_mongo():
+    global MONGO_CLIENT, MONGO_STATE_COLLECTION
+    mongo_uri = os.environ.get("MONGO_URI", "").strip()
+    if not mongo_uri:
+        return
+    db_name = os.environ.get("MONGO_DB_NAME", "serene_scheduler").strip() or "serene_scheduler"
+    try:
+        MONGO_CLIENT = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        MONGO_CLIENT.admin.command("ping")
+        MONGO_STATE_COLLECTION = MONGO_CLIENT[db_name]["app_state"]
+        print(f"[storage] Using MongoDB database '{db_name}'")
+    except Exception as exc:
+        MONGO_CLIENT = None
+        MONGO_STATE_COLLECTION = None
+        print(f"[storage] MongoDB unavailable, falling back to JSON files: {exc}")
+
+
+def state_key_for_path(path):
+    return os.path.splitext(os.path.basename(path))[0]
 
 
 def read_json_file(path, default_value):
+    if MONGO_STATE_COLLECTION is not None:
+        try:
+            doc = MONGO_STATE_COLLECTION.find_one({"_id": state_key_for_path(path)})
+            if doc is None or "value" not in doc:
+                return copy.deepcopy(default_value)
+            return doc["value"]
+        except Exception:
+            return copy.deepcopy(default_value)
     if not os.path.exists(path):
-        return default_value
+        return copy.deepcopy(default_value)
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
-        return default_value
+        return copy.deepcopy(default_value)
 
 
 def write_json_file(path, data):
+    if MONGO_STATE_COLLECTION is not None:
+        MONGO_STATE_COLLECTION.replace_one(
+            {"_id": state_key_for_path(path)},
+            {"_id": state_key_for_path(path), "value": data},
+            upsert=True
+        )
+        return
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
@@ -2264,11 +2303,9 @@ def delete_published_timetable_api():
         global PUBLISHED_TIMETABLE, RESCHEDULE_REQUESTS
         get_latest_published_timetable()
         PUBLISHED_TIMETABLE = None
-        if os.path.exists(PUBLISHED_TIMETABLE_FILE):
-            os.remove(PUBLISHED_TIMETABLE_FILE)
+        save_published_timetable()
         RESCHEDULE_REQUESTS = []
-        if os.path.exists(RESCHEDULE_REQUESTS_FILE):
-            os.remove(RESCHEDULE_REQUESTS_FILE)
+        save_reschedule_requests()
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": f"Delete failed: {str(e)}"}), 500
@@ -2675,6 +2712,7 @@ def serve_react(path):
     return send_from_directory(build_dir, 'index.html')
 
 
+init_mongo()
 USERS = load_users()
 PUBLISHED_TIMETABLE = load_published_timetable()
 RESCHEDULE_REQUESTS = load_reschedule_requests()
