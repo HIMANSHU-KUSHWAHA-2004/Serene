@@ -144,12 +144,13 @@ def load_users():
         users = {}
 
     changed = False
-    seed_users = read_seed_users()
-    for username, record in seed_users.items():
-        if username in users or not isinstance(record, dict):
-            continue
-        users[username] = record
-        changed = True
+    if not users:
+        seed_users = read_seed_users()
+        for username, record in seed_users.items():
+            if username in users or not isinstance(record, dict):
+                continue
+            users[username] = record
+            changed = True
 
     if "admin" not in users:
         users["admin"] = {
