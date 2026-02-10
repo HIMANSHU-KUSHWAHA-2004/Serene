@@ -32,8 +32,9 @@ services:
         mountPath: /var/data
         sizeGB: 1
 
-  - type: static_site
+  - type: web
     name: serene-scheduler-frontend
+    env: static
     rootDir: frontend
     plan: free
     buildCommand: npm install && npm run build
