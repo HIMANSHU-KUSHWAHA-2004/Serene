@@ -10,7 +10,7 @@ services:
       - key: FLASK_SECRET_KEY
         generateValue: true
       - key: DATA_DIR
-        value: /var/data
+        value: /tmp/serene-data
       - key: FRONTEND_ORIGIN
         sync: false
       - key: SMTP_HOST
@@ -27,18 +27,13 @@ services:
         value: Serene Scheduler
       - key: SHOW_DEV_VERIFICATION_CODE
         value: "0"
-    disks:
-      - name: scheduler-data
-        mountPath: /var/data
-        sizeGB: 1
-
   - type: web
     name: serene-scheduler-frontend
     env: static
     rootDir: frontend
     plan: free
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: build
     envVars:
       - key: VITE_API_BASE_URL
         sync: false

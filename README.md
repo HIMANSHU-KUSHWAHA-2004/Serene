@@ -3,16 +3,14 @@
 Serene Scheduler is a role-based timetable web app:
 - Frontend: React + Vite
 - Backend: Flask
-- Storage (prototype): JSON files
+- Storage: JSON files (prototype mode)
 
-This guide explains **Render deployment using `render.yaml` (Blueprint)**.
+This README gives a complete **manual Render deployment guide** with exact environment variables.
 
-## Project Layout
+## 1. Project Structure
 
 ```text
 boka/
-  render.yaml
-  README.md
   backend/
     app.py
     requirements.txt
@@ -25,171 +23,181 @@ boka/
     package.json
     vite.config.js
     src/
+  render.yaml (optional, not required for manual deploy)
 ```
 
-## Important Notes Before Deploy
+## 2. Before Deployment
 
-- `render.yaml` is already configured for:
-  - Backend Web Service (`backend`)
-  - Frontend Static Site (`frontend`)
-  - Persistent disk mounted at `/var/data`
-- Frontend publish folder is `build` (correct for your Vite config).
-- Do **not** commit real secrets in `backend/.env`.
+1. Push latest code to GitHub.
+2. Do not commit real secrets in `backend/.env`.
+3. Confirm backend starts locally and frontend builds:
 
-## 1) Push Code to GitHub
+```powershell
+python -m py_compile backend/app.py
+cd frontend
+npm run build
+```
 
-1. Commit latest code including:
-   - `render.yaml`
-   - `README.md`
-2. Push to your GitHub repo.
+## 3. Deploy Backend on Render (Web Service)
 
-## 2) Deploy with Blueprint (YAML)
+### Step-by-step
 
-1. Open Render Dashboard: `https://dashboard.render.com`
-2. Click `New +`
-3. Click `Blueprint`
-4. Select your GitHub repo
-5. Choose branch (usually `main`)
-6. Click `Apply`
+1. Go to `https://dashboard.render.com`
+2. Click `New +` -> `Web Service`
+3. Connect your GitHub repo
+4. Configure:
+- Name: `serene-scheduler-backend`
+- Branch: `main`
+- Root Directory: `backend`
+- Runtime: `Python`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `gunicorn app:app`
 
-Render will read `render.yaml` and auto-create:
-- `serene-scheduler-backend` (Web Service)
-- `serene-scheduler-frontend` (Static Site)
+5. Set Backend Environment Variables (Render -> Environment):
 
-## 3) What `render.yaml` Creates
+```env
+FLASK_SECRET_KEY=<strong_random_secret>
+DATA_DIR=/var/data
+FRONTEND_ORIGIN=<set after frontend deploy>
 
-### Backend service
-- Root: `backend`
-- Build: `pip install -r requirements.txt`
-- Start: `gunicorn app:app`
-- Disk: `scheduler-data` at `/var/data`
-- Defaults:
-  - `DATA_DIR=/var/data`
-  - `SMTP_HOST=smtp.gmail.com`
-  - `SMTP_PORT=587`
-  - `SHOW_DEV_VERIFICATION_CODE=0`
-  - `FLASK_SECRET_KEY` auto-generated
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=<your_email@gmail.com>
+SMTP_PASS=<gmail_app_password>
+SMTP_FROM_EMAIL=<your_email@gmail.com>
+SMTP_FROM_NAME=Serene Scheduler
 
-### Frontend service
-- Root: `frontend`
-- Build: `npm install && npm run build`
-- Publish: `build`
-- SPA rewrite: `/* -> /index.html`
+SHOW_DEV_VERIFICATION_CODE=0
+```
 
-## 4) Required Environment Variables After Blueprint
+6. Click `Create Web Service`
 
-In `render.yaml`, variables marked `sync: false` must be entered manually in Render UI.
+### Add Persistent Disk (must)
 
-### Backend (`serene-scheduler-backend`) required
-- `FRONTEND_ORIGIN`
-- `SMTP_USER`
-- `SMTP_PASS`
-- `SMTP_FROM_EMAIL`
+1. Open backend service -> `Disks`
+2. Click `Add Disk`
+3. Set:
+- Name: `scheduler-data`
+- Mount path: `/var/data`
+- Size: `1 GB` (or more)
+4. Save
 
-Optional (already set):
-- `SMTP_FROM_NAME=Serene Scheduler`
+Why: your app stores runtime data in JSON files. Without disk, data can reset on restart/redeploy.
 
-### Frontend (`serene-scheduler-frontend`) required
-- `VITE_API_BASE_URL`
+## 4. Deploy Frontend on Render (Static Site)
 
-## 5) Correct Order to Set Env Vars
+### Step-by-step
 
-Use this order to avoid CORS/fetch issues:
+1. Render Dashboard -> `New +` -> `Static Site`
+2. Connect same GitHub repo
+3. Configure:
+- Name: `serene-scheduler-frontend`
+- Branch: `main`
+- Root Directory: `frontend`
+- Build Command: `npm install && npm run build`
+- Publish Directory: `build`
 
-1. Let backend deploy once and copy backend URL.
-   - Example: `https://serene-scheduler-backend.onrender.com`
-2. Open frontend service -> Environment:
-   - Set `VITE_API_BASE_URL=https://serene-scheduler-backend.onrender.com`
-3. Deploy frontend and copy frontend URL.
-   - Example: `https://serene-scheduler-frontend.onrender.com`
-4. Open backend service -> Environment:
-   - Set `FRONTEND_ORIGIN=https://serene-scheduler-frontend.onrender.com`
-   - Set SMTP vars (`SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL`)
-5. Redeploy backend.
+4. Set Frontend Environment Variable:
 
-## 6) SMTP Setup (Gmail OTP)
+```env
+VITE_API_BASE_URL=https://<your-backend-service>.onrender.com
+```
 
-Use Gmail App Password (not your normal password).
+5. Click `Create Static Site`
 
-Steps:
+## 5. Final CORS Setup (Important)
+
+After frontend deploy completes:
+
+1. Copy frontend URL:
+- Example: `https://serene-scheduler-frontend.onrender.com`
+
+2. Go to backend service -> Environment
+3. Set:
+
+```env
+FRONTEND_ORIGIN=https://serene-scheduler-frontend.onrender.com
+```
+
+4. Save and redeploy backend.
+
+If this is wrong, frontend will show `Failed to fetch` / CORS errors.
+
+## 6. Environment Variables Reference
+
+### Backend required
+- `FLASK_SECRET_KEY`: Flask session secret
+- `DATA_DIR`: Data folder path (`/var/data` on Render)
+- `FRONTEND_ORIGIN`: Exact frontend URL
+- `SMTP_HOST`: SMTP server
+- `SMTP_PORT`: SMTP port
+- `SMTP_USER`: sender email login
+- `SMTP_PASS`: app password
+- `SMTP_FROM_EMAIL`: from email shown in OTP mail
+- `SMTP_FROM_NAME`: from display name
+- `SHOW_DEV_VERIFICATION_CODE`: keep `0` in production
+
+### Frontend required
+- `VITE_API_BASE_URL`: Backend API base URL
+
+## 7. Gmail SMTP Setup (OTP)
+
+Use App Password, not your normal password.
+
 1. Google Account -> Security
 2. Enable 2-Step Verification
 3. Open `App passwords`
-4. Create app password
-5. Put values in Render backend env:
+4. Generate app password
+5. Put it in Render as `SMTP_PASS`
 
-```env
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_16_char_app_password
-SMTP_FROM_EMAIL=your_email@gmail.com
-SMTP_FROM_NAME=Serene Scheduler
-```
+## 8. Data Persistence Behavior
 
-## 7) Persistent Storage Behavior
-
-Because `DATA_DIR=/var/data` and disk is mounted:
+With `DATA_DIR=/var/data` + persistent disk, these stay saved:
 - `users.json`
 - `pending_registrations.json`
 - `published_timetable.json`
 - `reschedule_requests.json`
 - `activity_log.json`
 
-will persist across restart/redeploy.
+Without persistent disk, these may reset.
 
-Without disk, JSON data resets.
-
-## 8) Post-Deploy Verification Checklist
+## 9. Post-Deploy Testing Checklist
 
 1. Open frontend URL.
 2. Login as admin.
-3. Register one student -> verify OTP.
-4. Register one teacher -> approve from admin.
+3. Register student and verify OTP.
+4. Register teacher and approve from admin panel.
 5. Generate/publish timetable.
-6. Login as student/teacher and verify timetable.
-7. Restart backend service from Render.
-8. Confirm users and timetable still exist.
+6. Login as student and teacher.
+7. Restart backend service.
+8. Confirm users + timetable still exist.
 
-## 9) Common Errors and Fixes
+## 10. Common Problems and Fixes
 
 ### `Failed to fetch`
-Cause:
-- `VITE_API_BASE_URL` wrong, or backend not running.
-Fix:
-- Correct frontend env var, redeploy frontend.
+- Check frontend `VITE_API_BASE_URL`
+- Check backend is running
+- Check backend `FRONTEND_ORIGIN`
 
 ### CORS blocked
-Cause:
-- `FRONTEND_ORIGIN` not exact frontend URL.
-Fix:
-- Set exact URL and redeploy backend.
+- `FRONTEND_ORIGIN` must exactly match frontend URL
 
-### OTP mail not received
-Cause:
-- Wrong SMTP values / bad app password.
-Fix:
-- Recreate app password and update env vars.
+### OTP not delivered
+- Wrong SMTP values or invalid app password
+- Check spam folder
 
-### Data disappears
-Cause:
-- No disk or wrong `DATA_DIR`.
-Fix:
-- Ensure disk exists and `DATA_DIR=/var/data`.
+### Data lost after restart
+- Missing persistent disk
+- Wrong `DATA_DIR`
 
-## 10) Update Deployment After Future Code Changes
+## 11. Security Checklist
 
-After pushing new commits:
-- Render auto-deploys by default.
-- If env changes are needed, update in Render UI.
-- If you edit `render.yaml`, re-apply via Blueprint (or reconnect and sync).
+- Never commit real `.env` secrets.
+- Rotate leaked secrets immediately.
+- Keep `SHOW_DEV_VERIFICATION_CODE=0` in production.
+- Use a strong random `FLASK_SECRET_KEY`.
 
-## 11) Security Checklist
-
-- Never store real secrets in repo `.env`.
-- Rotate leaked credentials immediately.
-- Keep `SHOW_DEV_VERIFICATION_CODE=0` on production.
-- Use strong, unique `FLASK_SECRET_KEY`.
-
-## 12) Local Run (Quick)
+## 12. Local Development Commands
 
 Backend:
 
@@ -208,7 +216,3 @@ cd frontend
 npm install
 npm run dev
 ```
-
----
-
-If you want, I can also add a short **"Render Deployment Quick Card"** at the top (10 lines only) for faster reuse.

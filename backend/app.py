@@ -42,8 +42,17 @@ CORS(
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
-os.makedirs(DATA_DIR, exist_ok=True)
+configured_data_dir = os.environ.get("DATA_DIR", BASE_DIR)
+fallback_data_dir = os.path.join("/tmp", "serene-data")
+try:
+    os.makedirs(configured_data_dir, exist_ok=True)
+    DATA_DIR = configured_data_dir
+except PermissionError:
+    os.makedirs(fallback_data_dir, exist_ok=True)
+    DATA_DIR = fallback_data_dir
+except OSError:
+    os.makedirs(fallback_data_dir, exist_ok=True)
+    DATA_DIR = fallback_data_dir
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 PUBLISHED_TIMETABLE_FILE = os.path.join(DATA_DIR, "published_timetable.json")
 RESCHEDULE_REQUESTS_FILE = os.path.join(DATA_DIR, "reschedule_requests.json")
