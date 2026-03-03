@@ -17,11 +17,12 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 from pymongo import MongoClient
 
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Serve React production build from frontend/build
 app = Flask(
     __name__,
-    static_folder=os.path.join(os.getcwd(), '..','frontend', 'build'),
+    static_folder=os.path.join(APP_DIR, '..', 'frontend', 'build'),
     static_url_path='/'
 )
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "change-this-secret")
@@ -48,7 +49,7 @@ CORS(
     origins=allowed_origins
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = APP_DIR
 configured_data_dir = os.environ.get("DATA_DIR", BASE_DIR)
 fallback_data_dir = os.path.join("/tmp", "serene-data")
 try:

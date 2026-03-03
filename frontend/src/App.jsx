@@ -8,12 +8,14 @@ import HandlingEvents from "./pages/HandlingEvents";
 import ReviewSuggestions from "./pages/ReviewSuggestions";
 import ReviewObjections from "./pages/ReviewObjections";
 import LoginPage from "./pages/LoginPage";
+import LandingPage from "./pages/LandingPage";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import { TimetableAPI } from "./services/api-services";
 
 const TAB_AUTH_KEY = "serene_tab_authenticated";
 const ADMIN_PAGES = new Set(["dashboard", "generate", "events", "suggestions", "objections"]);
+const PUBLIC_PAGES = new Set(["landing", "login", "register"]);
 
 function getPageFromHash() {
   const raw = (window.location.hash || "").replace(/^#\/?/, "").trim().toLowerCase();
@@ -23,6 +25,20 @@ function getPageFromHash() {
 
 function setHashForPage(page) {
   const next = ADMIN_PAGES.has(page) ? page : "dashboard";
+  const targetHash = `#/${next}`;
+  if (window.location.hash !== targetHash) {
+    window.location.hash = targetHash;
+  }
+}
+
+function getPublicPageFromHash() {
+  const raw = (window.location.hash || "").replace(/^#\/?/, "").trim().toLowerCase();
+  if (PUBLIC_PAGES.has(raw)) return raw;
+  return "landing";
+}
+
+function setHashForPublicPage(page) {
+  const next = PUBLIC_PAGES.has(page) ? page : "landing";
   const targetHash = `#/${next}`;
   if (window.location.hash !== targetHash) {
     window.location.hash = targetHash;
@@ -88,6 +104,7 @@ function AdminApp({ user, onLogout }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [publicPage, setPublicPage] = useState(() => getPublicPageFromHash());
 
   const restoreSessionForTab = async () => {
     const shouldRestore = sessionStorage.getItem(TAB_AUTH_KEY) === "1";
@@ -117,6 +134,21 @@ export default function App() {
     restoreSessionForTab();
   }, []);
 
+  useEffect(() => {
+    const onHashChange = () => {
+      setPublicPage(getPublicPageFromHash());
+    };
+
+    if (!window.location.hash) {
+      setHashForPublicPage("landing");
+    } else {
+      setPublicPage(getPublicPageFromHash());
+    }
+
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
   const handleLogin = (loggedInUser) => {
     setUser(loggedInUser);
     sessionStorage.setItem(TAB_AUTH_KEY, "1");
@@ -138,7 +170,31 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
+    if (publicPage === "login" || publicPage === "register") {
+      return (
+        <LoginPage
+          onLogin={handleLogin}
+          initialMode={publicPage === "register" ? "register" : "login"}
+          onBackToLanding={() => {
+            setHashForPublicPage("landing");
+            setPublicPage("landing");
+          }}
+        />
+      );
+    }
+
+    return (
+      <LandingPage
+        onLoginClick={() => {
+          setHashForPublicPage("login");
+          setPublicPage("login");
+        }}
+        onRegisterClick={() => {
+          setHashForPublicPage("register");
+          setPublicPage("register");
+        }}
+      />
+    );
   }
 
   if (user.role === "teacher") {

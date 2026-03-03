@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TimetableAPI } from "../services/api-services";
 
 const initialRegisterForm = {
@@ -13,8 +13,8 @@ const initialRegisterForm = {
   teacher_name: "",
 };
 
-export default function LoginPage({ onLogin }) {
-  const [mode, setMode] = useState("login");
+export default function LoginPage({ onLogin, initialMode = "login", onBackToLanding }) {
+  const [mode, setMode] = useState(initialMode === "register" ? "register" : "login");
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +29,10 @@ export default function LoginPage({ onLogin }) {
   const [verificationCode, setVerificationCode] = useState("");
   const [registrationId, setRegistrationId] = useState(null);
   const [codePreview, setCodePreview] = useState("");
+
+  useEffect(() => {
+    setMode(initialMode === "register" ? "register" : "login");
+  }, [initialMode]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -164,9 +168,20 @@ export default function LoginPage({ onLogin }) {
         </section>
 
         <section className="rounded-3xl border border-slate-700 bg-slate-900/80 p-6 shadow-2xl sm:p-8">
-          <div className="mb-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Secure Access</p>
-            <p className="mt-1 text-sm text-slate-400">Login or create your account to continue.</p>
+          <div className="mb-6 flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Secure Access</p>
+              <p className="mt-1 text-sm text-slate-400">Login or create your account to continue.</p>
+            </div>
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200"
+              >
+                Back to Home
+              </button>
+            )}
           </div>
 
           <div className="mb-7 grid grid-cols-2 gap-2">
@@ -382,3 +397,5 @@ export default function LoginPage({ onLogin }) {
     </div>
   );
 }
+
+

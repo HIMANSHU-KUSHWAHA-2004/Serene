@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import TimetableInputForm from "./TimetableInputForm";
 import MultipleTimetableGenerator from "./MultipleTimetableGenerator";
 import TimetableDisplay from "./TimetableDisplay";
+import "./GenerateTimetable.css";
 import "./TimetableInputForm.css";
 import "./MultipleTimetableGenerator.css";
 import "./TimetableDisplay.css";
@@ -17,7 +18,6 @@ const TABS = [
   { id: "slots", label: "Timetable Slots" },
   { id: "constraints", label: "Constraints" },
   { id: "unavailability", label: "Unavailability" },
-  { id: "clear", label: "Clear Form" },
 ];
 
 function normalizeImportedData(parsed) {
@@ -183,27 +183,36 @@ export default function GenerateTimetable() {
 
   return (
     <div className="generate-page">
-      <h2>Generate Timetable</h2>
-      <div className="tabs">
-        {TABS.map((tab) =>
-          tab.id === "clear" ? (
-            <button key={tab.id} onClick={onClearClick}>
-              {tab.label}
-            </button>
-          ) : (
+      <h2 className="generate-title">Generate Timetable</h2>
+      <div className="generate-toolbar">
+        <div className="generate-tabs">
+          {TABS.map((tab) => (
             <button
               key={tab.id}
-              className={active === tab.id ? "active" : ""}
+              className={`tool-btn tool-btn--tab ${active === tab.id ? "is-active" : ""}`}
               onClick={() => setActive(tab.id)}
             >
               {tab.label}
             </button>
-          )
-        )}
-        <button onClick={onClearClick}>Clear</button>
-        <button onClick={onImportClick}>Import JSON</button>
-        <button onClick={onExportClick}>Export JSON</button>
-        <button onClick={() => setActive(null)}>Show All</button>
+          ))}
+        </div>
+        <div className="generate-actions">
+          <button className="tool-btn tool-btn--danger" onClick={onClearClick}>
+            Clear Form
+          </button>
+          <button className="tool-btn tool-btn--neutral" onClick={onImportClick}>
+            Import JSON
+          </button>
+          <button className="tool-btn tool-btn--neutral" onClick={onExportClick}>
+            Export JSON
+          </button>
+          <button
+            className={`tool-btn tool-btn--primary ${active === null ? "is-active" : ""}`}
+            onClick={() => setActive(null)}
+          >
+            Show All
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"

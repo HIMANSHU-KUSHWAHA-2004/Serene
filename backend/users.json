@@ -344,19 +344,6 @@
     "name": "B.TECH IT VI Sem - A",
     "section": "B.TECH IT VI Sem - A"
   },
-  "Nikkkkw01u": {
-    "username": "Nikkkkw01u",
-    "password": "lunduniversitygju",
-    "role": "student",
-    "name": "Nik",
-    "email": "hk5652990@gmail.com",
-    "status": "active",
-    "section": "CSE 7th Sem - A",
-    "stream": "CSE",
-    "semester": "7th",
-    "batch": "",
-    "division": "A"
-  },
   "sahil123": {
     "username": "sahil123",
     "password": "123456",
@@ -382,5 +369,32 @@
     "semester": "6th",
     "batch": "Batch-1",
     "division": "A"
+  },
+  "t_dr_karambir": {
+    "username": "t_dr_karambir",
+    "password": "teacher123",
+    "role": "teacher",
+    "name": "Dr. Karambir",
+    "teacher_name": "Dr. Karambir",
+    "email": "t_dr_karambir@demo.local",
+    "status": "active"
+  },
+  "t_dr_sona": {
+    "username": "t_dr_sona",
+    "password": "teacher123",
+    "role": "teacher",
+    "name": "Dr. Sona",
+    "teacher_name": "Dr. Sona",
+    "email": "t_dr_sona@demo.local",
+    "status": "active"
+  },
+  "t_mr_divyansh": {
+    "username": "t_mr_divyansh",
+    "password": "teacher123",
+    "role": "teacher",
+    "name": "Mr. Divyansh",
+    "teacher_name": "Mr. Divyansh",
+    "email": "t_mr_divyansh@demo.local",
+    "status": "active"
   }
 }

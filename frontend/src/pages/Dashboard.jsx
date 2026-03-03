@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TimetableDisplay from "./TimetableDisplay";
 import { TimetableAPI } from "../services/api-services";
 
@@ -28,8 +28,22 @@ export default function Dashboard({ setActivePage }) {
 
   useEffect(() => {
     loadPublished();
-    return () => {};
   }, []);
+
+  const goToGenerate = () => {
+    if (typeof setActivePage === "function") {
+      setActivePage("generate");
+      return;
+    }
+    window.location.hash = "#/generate";
+  };
+
+  const formatPublishedAt = (value) => {
+    if (!value) return "N/A";
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return value;
+    return dt.toLocaleString();
+  };
 
   const handleDeletePublished = async () => {
     if (!window.confirm("Delete published timetable? This can only be done by admin.")) return;
@@ -57,16 +71,17 @@ export default function Dashboard({ setActivePage }) {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setActivePage("generate")}
+              onClick={goToGenerate}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700"
             >
               Generate / Publish
             </button>
             <button
               onClick={loadPublished}
-              className="px-4 py-2 bg-slate-800 text-slate-100 rounded-lg font-semibold border border-slate-600 hover:bg-slate-700"
+              disabled={loading}
+              className="px-4 py-2 bg-slate-800 text-slate-100 rounded-lg font-semibold border border-slate-600 hover:bg-slate-700 disabled:opacity-60"
             >
-              Refresh
+              {loading ? "Refreshing..." : "Refresh"}
             </button>
             <button
               onClick={handleDeletePublished}
@@ -83,7 +98,7 @@ export default function Dashboard({ setActivePage }) {
         ) : published?.timetableData && published?.inputData ? (
           <>
             <div className="mb-4 text-sm text-slate-300">
-              <strong>Published At:</strong> {published.publishedAt || "N/A"}
+              <strong>Published At:</strong> {formatPublishedAt(published.publishedAt)}
             </div>
             <div className="overflow-auto border border-slate-700 rounded-lg p-3 md:p-4 bg-slate-950/40">
               <TimetableDisplay
